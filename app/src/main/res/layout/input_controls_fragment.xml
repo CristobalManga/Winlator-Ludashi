@@ -96,6 +96,13 @@
             android:layout_marginBottom="16dp" /> <!-- Added margin for better spacing -->
 
         <!-- Gyro Activator Button Label -->
+
+        <CheckBox
+            android:id="@+id/MouseGyroEnabled"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enable Right-Stick Gyroscope (Always Active)"
+            android:layout_marginBottom="16dp" />
         <TextView
             android:id="@+id/TVGyroTriggerLabel"
             android:layout_width="wrap_content"

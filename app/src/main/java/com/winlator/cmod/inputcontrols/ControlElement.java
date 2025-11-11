@@ -2,6 +2,7 @@ package com.winlator.cmod.inputcontrols;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
@@ -23,6 +24,7 @@ import org.json.JSONObject;
 import java.util.Arrays;
 
 public class ControlElement {
+    private int customColor = Color.WHITE;
     public static final float STICK_DEAD_ZONE = 0.15f;
     public static final float DPAD_DEAD_ZONE = 0.3f;
     public static final float STICK_SENSITIVITY = 3.0f;
@@ -129,6 +131,10 @@ public class ControlElement {
         reset();
     }
 
+    public int getCustomColor() {
+        return customColor;
+    }
+
     public int getBindingCount() {
         return bindings.length;
     }
@@ -146,6 +152,11 @@ public class ControlElement {
 
     public void setShape(Shape shape) {
         this.shape = shape;
+        boundingBoxNeedsUpdate = true;
+    }
+
+    public void setCustomColor(int color) {
+        this.customColor = color;
         boundingBoxNeedsUpdate = true;
     }
 
@@ -350,7 +361,7 @@ public class ControlElement {
     public void draw(Canvas canvas) {
         int snappingSize = inputControlsView.getSnappingSize();
         Paint paint = inputControlsView.getPaint();
-        int primaryColor = inputControlsView.getPrimaryColor();
+        int primaryColor = customColor != Color.WHITE ? customColor : inputControlsView.getPrimaryColor();
 
         int fillColor = ColorUtils.setAlphaComponent(primaryColor, 70);
 
@@ -632,6 +643,7 @@ public class ControlElement {
             JSONObject elementJSONObject = new JSONObject();
             elementJSONObject.put("type", type.name());
             elementJSONObject.put("shape", shape.name());
+            elementJSONObject.put("customColor", customColor);
 
             JSONArray bindingsJSONArray = new JSONArray();
             for (Binding binding : bindings) bindingsJSONArray.put(binding.name());

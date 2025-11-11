@@ -1,6 +1,8 @@
 package com.winlator.cmod;
 
+import android.content.Intent;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,9 +37,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
+import android.graphics.Color;
+import androidx.appcompat.app.AlertDialog;
+
 public class ControlsEditorActivity extends AppCompatActivity implements View.OnClickListener {
     private InputControlsView inputControlsView;
     private ControlsProfile profile;
+    private ImageView ivBackground;
+    private FrameLayout container;
+
+    private final String[] colorNames = {
+            "White", "Red", "Green", "Blue", "Yellow", "Cyan", "Magenta", "Orange", "Purple", "Gray"
+    };
+    private final int[] colorValues = {
+            Color.WHITE, Color.RED, Color.GREEN, Color.BLUE,
+            Color.YELLOW, Color.CYAN, Color.MAGENTA,
+            Color.parseColor("#FFA500"), // Orange
+            Color.parseColor("#800080"), // Purple
+            Color.GRAY
+    };
 
     @Override
     public void onCreate(Bundle bundle) {
@@ -54,11 +72,19 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
         inputControlsView.setProfile(profile);
 
         FrameLayout container = findViewById(R.id.FLContainer);
-        container.addView(inputControlsView, 0);
+        ivBackground = new ImageView(this);
+        ivBackground.setLayoutParams(new FrameLayout.LayoutParams(-1, -1));
+        ivBackground.setScaleType(ImageView.ScaleType.FIT_XY);
+        container.addView(ivBackground, 0);
+
+
+        container.addView(inputControlsView, 1);
 
         container.findViewById(R.id.BTAddElement).setOnClickListener(this);
         container.findViewById(R.id.BTRemoveElement).setOnClickListener(this);
         container.findViewById(R.id.BTElementSettings).setOnClickListener(this);
+        container.findViewById(R.id.BTColorPicker).setOnClickListener(this);
+        container.findViewById(R.id.BTBackground).setOnClickListener(this);
     }
 
     @Override
@@ -81,7 +107,78 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
                 }
                 else AppUtils.showToast(this, R.string.no_control_element_selected);
                 break;
+            case R.id.BTColorPicker:
+                ControlElement colorElement = inputControlsView.getSelectedElement();
+                if (colorElement != null) {
+                    showColorPicker(v);
+                } else {
+                    AppUtils.showToast(this, R.string.no_control_element_selected);
+                }
+                break;
+            case R.id.BTBackground:
+                Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                intent.setType("image/*");
+                startActivityForResult(intent, 100);
+                break;
         }
+
+    }
+
+    private void showColorPicker(View anchorView) {
+        final ControlElement element = inputControlsView.getSelectedElement();
+        View view = LayoutInflater.from(this).inflate(R.layout.color_picker_dialog, null);
+        Spinner sColor = view.findViewById(R.id.SColor);
+        EditText etHex = view.findViewById(R.id.ETHexColor);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, colorNames);
+        sColor.setAdapter(adapter);
+
+        final int currentColor = element.getCustomColor();
+        final int[] spinnerPos = {0};
+        for (int i = 0; i < colorValues.length; i++) {
+            if (colorValues[i] == currentColor) {
+                spinnerPos[0] = i;
+                break;
+            }
+        }
+        sColor.setSelection(spinnerPos[0], false);
+        etHex.setText(String.format("#%06X", 0xFFFFFF & currentColor));
+
+
+        sColor.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View v, int position, long id) {
+                etHex.setText(String.format("#%06X", 0xFFFFFF & colorValues[position]));
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Select Color")
+                .setView(view)
+                .setPositiveButton("OK", (d, which) -> {
+                    String hex = etHex.getText().toString().trim();
+                    try {
+                        if (hex.matches("^#?[0-9A-Fa-f]{6}$")) {
+                            if (!hex.startsWith("#")) hex = "#" + hex;
+                            element.setCustomColor(Color.parseColor(hex));
+                        } else {
+                            throw new IllegalArgumentException();
+                        }
+                    } catch (Exception e) {
+                        element.setCustomColor(colorValues[sColor.getSelectedItemPosition()]);
+                    }
+                    profile.save();
+                    inputControlsView.invalidate();
+                })
+                .setNegativeButton("Cancel", null)
+                .setNeutralButton("Reset", (d, which) -> {
+                    element.setCustomColor(Color.WHITE);
+                    profile.save();
+                    inputControlsView.invalidate();
+                })
+                .create();
+        dialog.show();
     }
 
     private void showControlElementSettings(View anchorView) {
@@ -181,6 +278,18 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
             profile.save();
             inputControlsView.invalidate();
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 100 && resultCode == RESULT_OK && data != null) {
+            Uri uri = data.getData();
+            try (InputStream is = getContentResolver().openInputStream(uri)) {
+                ivBackground.setImageBitmap(BitmapFactory.decodeStream(is));
+                ivBackground.setAlpha(0.3f);
+            } catch (Exception ignored) {}
+        }
     }
 
     private void loadTypeSpinner(final ControlElement element, Spinner spinner, Runnable callback) {
@@ -366,6 +475,7 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
 
     @Override
     public void onBackPressed() {
+        ivBackground.setImageDrawable(null);
         super.onBackPressed();
         overridePendingTransition(R.anim.slide_in_down, R.anim.slide_out_up);  // Custom slide animations for exiting
     }

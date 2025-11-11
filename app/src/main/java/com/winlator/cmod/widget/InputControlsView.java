@@ -233,7 +233,7 @@ public class InputControlsView extends View {
         paint.setStyle(Paint.Style.FILL);
         paint.setStrokeWidth(snappingSize * 0.0625f);
         paint.setColor(0xff000000);
-        canvas.drawColor(Color.BLACK);
+
 
         paint.setAntiAlias(false);
         paint.setColor(0xff303030);

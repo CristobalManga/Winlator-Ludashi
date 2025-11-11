@@ -267,7 +267,12 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         gyroSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
-        boolean gyroEnabled = preferences.getBoolean("gyro_enabled", true);
+        boolean gyroEnabled = preferences.getBoolean("gyro_enabled", false);
+        boolean mouseGyroEnabled = preferences.getBoolean("mouse_gyro_enabled", false);
+
+        if (gyroEnabled || mouseGyroEnabled) {
+            sensorManager.registerListener(gyroListener, gyroSensor, SensorManager.SENSOR_DELAY_GAME);
+        }
 
         if (gyroEnabled) {
             // Register the sensor event listener

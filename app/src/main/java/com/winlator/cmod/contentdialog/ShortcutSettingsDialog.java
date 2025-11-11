@@ -1,6 +1,12 @@
 package com.winlator.cmod.contentdialog;
 
-
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.provider.MediaStore;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.content.Intent;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -56,6 +62,10 @@ public class ShortcutSettingsDialog extends ContentDialog {
     private InputControlsManager inputControlsManager;
     private TextView tvGraphicsDriverVersion;
     private String box64Version;
+    private ImageView decorLayerPreview;
+    private Button btnSelectDecorLayer;
+    private Button btnRemoveDecorLayer;
+    private Shortcut currentShortcut;
 
 
     public ShortcutSettingsDialog(ShortcutsFragment fragment, Shortcut shortcut) {
@@ -64,6 +74,7 @@ public class ShortcutSettingsDialog extends ContentDialog {
         this.shortcut = shortcut;
         setTitle(shortcut.name);
         setIcon(R.drawable.icon_settings);
+        this.currentShortcut = shortcut;
 
         // Initialize the ContentsManager
         ContainerManager containerManager = shortcut.container.getManager();
@@ -314,6 +325,7 @@ public class ShortcutSettingsDialog extends ContentDialog {
 
         final CPUListView cpuListView = findViewById(R.id.CPUListView);
         cpuListView.setCheckedCPUList(shortcut.getExtra("cpuList", shortcut.container.getCPUList(true)));
+        setupDecorLayerControls();
 
         setOnConfirmCallback(() -> {
             String name = etName.getText().toString().trim();
@@ -694,4 +706,122 @@ public class ShortcutSettingsDialog extends ContentDialog {
         AppUtils.setSpinnerSelectionFromIdentifier(sGraphicsDriver, selectedGraphicsDriver);
         update.run();
     }
+
+
+
+private void setupDecorLayerControls() {
+    final Context context = fragment.getContext();
+
+    // Find views (will be added to layout by user)
+    // Note: User needs to add these views to the layout XML manually
+    try {
+        decorLayerPreview = findViewById(R.id.IVDecorLayerPreview);
+        btnSelectDecorLayer = findViewById(R.id.BTSelectDecorLayer);
+        btnRemoveDecorLayer = findViewById(R.id.BTRemoveDecorLayer);
+
+        // Setup select button
+        if (btnSelectDecorLayer != null) {
+            btnSelectDecorLayer.setOnClickListener(v -> {
+                if (openImagePicker()) {
+                    // Store reference for later use
+                    Log.d("ShortcutSettingsDialog", "Image picker opened for shortcut: " + currentShortcut.name);
+                }
+            });
+        }
+
+        // Setup remove button
+        if (btnRemoveDecorLayer != null) {
+            btnRemoveDecorLayer.setOnClickListener(v -> {
+                shortcut.removeDecorLayer();
+
+                // Update UI
+                if (decorLayerPreview != null) {
+                    decorLayerPreview.setVisibility(View.GONE);
+                }
+                btnRemoveDecorLayer.setVisibility(View.GONE);
+
+                Log.d("ShortcutSettingsDialog", "Decor layer removed");
+            });
+        }
+
+        // Load existing decor layer if available
+        if (shortcut.getDecorLayer() != null) {
+            if (decorLayerPreview != null) {
+                decorLayerPreview.setImageBitmap(shortcut.getDecorLayer());
+                decorLayerPreview.setVisibility(View.VISIBLE);
+            }
+            if (btnRemoveDecorLayer != null) {
+                btnRemoveDecorLayer.setVisibility(View.VISIBLE);
+            }
+        } else {
+            if (decorLayerPreview != null) {
+                decorLayerPreview.setVisibility(View.GONE);
+            }
+            if (btnRemoveDecorLayer != null) {
+                btnRemoveDecorLayer.setVisibility(View.GONE);
+            }
+        }
+    } catch (Exception e) {
+        Log.w("ShortcutSettingsDialog", "Decor layer controls not found in layout, skipping setup");
+    }
+}
+
+private boolean openImagePicker() {
+    try {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+
+        // Store reference to this dialog
+        ShortcutsFragment.currentDialog = this;
+
+        fragment.startActivityForResult(intent, ShortcutsFragment.PICK_DECOR_LAYER);
+        return true;
+    } catch (Exception e) {
+        Log.e("ShortcutSettingsDialog", "Failed to open image picker", e);
+        return false;
+    }
+}
+
+public void handleDecorLayerSelection(Intent data) {
+    if (data != null && data.getData() != null) {
+        Uri uri = data.getData();
+        try {
+            Bitmap bitmap = loadBitmapFromUri(getContext(), uri);
+
+            if (bitmap != null) {
+                currentShortcut.saveDecorLayer(bitmap);
+
+                // Update preview
+                if (decorLayerPreview != null) {
+                    decorLayerPreview.setImageBitmap(bitmap);
+                    decorLayerPreview.setVisibility(View.VISIBLE);
+                }
+
+                // Show remove button
+                if (btnRemoveDecorLayer != null) {
+                    btnRemoveDecorLayer.setVisibility(View.VISIBLE);
+                }
+
+                Log.d("ShortcutSettingsDialog", "Decor layer selected and saved");
+            }
+        } catch (Exception e) {
+            Log.e("ShortcutSettingsDialog", "Failed to load image", e);
+        }
+    }
+}
+
+private static Bitmap loadBitmapFromUri(Context context, Uri uri) {
+    try {
+        android.content.ContentResolver contentResolver = context.getContentResolver();
+        java.io.InputStream inputStream = contentResolver.openInputStream(uri);
+        if (inputStream != null) {
+            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+            inputStream.close();
+            return bitmap;
+        }
+    } catch (Exception e) {
+        Log.e("ShortcutSettingsDialog", "Error loading bitmap from URI", e);
+    }
+    return null;
+}
 }

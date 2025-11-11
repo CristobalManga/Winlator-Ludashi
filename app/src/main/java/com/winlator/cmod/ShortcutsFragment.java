@@ -66,6 +66,9 @@ public class ShortcutsFragment extends Fragment {
     private TextView emptyTextView;
     private ContainerManager manager;
 
+    public static ShortcutSettingsDialog currentDialog;
+    public static final int PICK_DECOR_LAYER = 1000;
+
     public static final int IMPORT_SHORTCUT = 1005;
 
     @Override
@@ -481,4 +484,18 @@ public class ShortcutsFragment extends Fragment {
             }
         } catch (Exception e) {}
     }
+
+
+@Override
+public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+
+    // Handle decor layer image picker result
+    if (requestCode == PICK_DECOR_LAYER && resultCode == android.app.Activity.RESULT_OK) {
+        if (currentDialog != null && data != null) {
+            // Update the dialog with the selected image
+            currentDialog.handleDecorLayerSelection(data);
+        }
+    }
+}
 }

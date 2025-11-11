@@ -73,6 +73,7 @@ public class InputControlsFragment extends Fragment {
     private final int selectedProfileId;
     private SharedPreferences preferences;
     private CheckBox cbGyroEnabled;
+    private CheckBox cbMouseGyroEnabled;
     private Spinner sbGyroTriggerButton;
     private RadioGroup rgGyroMode;
     private RadioGroup rgTriggerType;
@@ -95,6 +96,7 @@ public class InputControlsFragment extends Fragment {
         editor.putInt("gyro_trigger_button", selectedKeycode);
 
         editor.putInt("gyro_mode", rgGyroMode.getCheckedRadioButtonId() == R.id.RBHoldMode ? 0 : 1);
+        editor.putBoolean("mouse_gyro_enabled", cbMouseGyroEnabled.isChecked());
 
         List<Integer> triggerRbIds = List.of(R.id.RBTriggerIsButton, R.id.RBTriggerIsAxis, R.id.RBTriggerIsMixed);
         editor.putInt("trigger_type", triggerRbIds.indexOf(rgTriggerType.getCheckedRadioButtonId()));
@@ -177,6 +179,25 @@ public class InputControlsFragment extends Fragment {
 
         cbGyroEnabled = view.findViewById(R.id.CBGyroEnabled);
         cbGyroEnabled.setChecked(preferences.getBoolean("gyro_enabled", false));
+
+        cbMouseGyroEnabled = view.findViewById(R.id.MouseGyroEnabled);
+        cbMouseGyroEnabled.setChecked(preferences.getBoolean("mouse_gyro_enabled", false));
+
+        cbGyroEnabled.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked && cbMouseGyroEnabled.isChecked()) {
+                cbMouseGyroEnabled.setChecked(false);
+                preferences.edit().putBoolean("mouse_gyro_enabled", false).apply();
+            }
+            preferences.edit().putBoolean("gyro_enabled", isChecked).apply();
+        });
+
+        cbMouseGyroEnabled.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked && cbGyroEnabled.isChecked()) {
+                cbGyroEnabled.setChecked(false);
+                preferences.edit().putBoolean("gyro_enabled", false).apply();
+            }
+            preferences.edit().putBoolean("mouse_gyro_enabled", isChecked).apply();
+        });
 
         sbGyroTriggerButton = view.findViewById(R.id.SBGyroTriggerButton);
         rgGyroMode = view.findViewById(R.id.RGyroMode);

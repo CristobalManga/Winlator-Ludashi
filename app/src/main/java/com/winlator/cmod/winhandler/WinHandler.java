@@ -32,6 +32,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class WinHandler {
+    private float accumulatedGyroX = 0.0f;
+    private float accumulatedGyroY = 0.0f;
+
     private static final short SERVER_PORT = 7947;
     private static final short CLIENT_PORT = 7946;
     public static final byte FLAG_DINPUT_MAPPER_STANDARD = 0x01;
@@ -122,8 +125,14 @@ public class WinHandler {
 
     public void updateGyroData(float rawGyroX, float rawGyroY) {
         // Check if gyro is enabled before processing the data
+        if (preferences.getBoolean("mouse_gyro_enabled", false)) {
+            updateGyroDataMouse(rawGyroX, rawGyroY);
+            return;
+        }
+
+
         if (!preferences.getBoolean("gyro_enabled", false)) {
-            return; // Exit if the gyro is disabled
+            return;
         }
 
         boolean shouldProcessGyro = true;
@@ -163,6 +172,42 @@ public class WinHandler {
 
             // Send the updated gamepad state
             sendGamepadState();
+        }
+    }
+
+
+    public void updateGyroDataMouse(float rawGyroX, float rawGyroY) {
+
+        if (!preferences.getBoolean("mouse_gyro_enabled", false)) {
+            return;
+        }
+
+        if (Math.abs(rawGyroX) < gyroDeadzone) rawGyroX = 0;
+        if (Math.abs(rawGyroY) < gyroDeadzone) rawGyroY = 0;
+
+
+        if (invertGyroX) rawGyroX = -rawGyroX;
+        if (invertGyroY) rawGyroY = -rawGyroY;
+
+
+        float mouseScale = preferences.getFloat("gyro_mouse_scale", 50.0f); // Escala aumentada para capturar movimientos mínimos
+        float scaledGyroX = rawGyroX * gyroSensitivityX;
+        float scaledGyroY = rawGyroY * gyroSensitivityY;
+
+
+        accumulatedGyroX += scaledGyroX * mouseScale;
+        accumulatedGyroY += scaledGyroY * mouseScale;
+
+
+        int dx = (int) accumulatedGyroX;
+        int dy = (int) accumulatedGyroY;
+
+
+        if (dx != 0 || dy != 0) {
+            mouseEvent(MouseEventFlags.MOVE, dx, dy, 0);
+
+            accumulatedGyroX -= dx;
+            accumulatedGyroY -= dy;
         }
     }
 
