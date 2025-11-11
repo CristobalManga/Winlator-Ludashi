@@ -29,6 +29,7 @@ import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.ImageView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -193,7 +194,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
     private GuestProgramLauncherComponent guestProgramLauncherComponent;
     private EnvVars overrideEnvVars;
-
+    private ImageView decorLayerView; // Decor layer image view
 
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
@@ -1131,6 +1132,26 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         rootView.addView(xServerView);
 
         globalCursorSpeed = preferences.getFloat("cursor_speed", 1.0f);
+        if (shortcut != null && shortcut.getDecorLayer() != null) {
+            decorLayerView = new ImageView(this);
+            decorLayerView.setImageBitmap(shortcut.getDecorLayer());
+            decorLayerView.setScaleType(ImageView.ScaleType.FIT_XY);
+            decorLayerView.setClickable(false); // Not touchable
+            decorLayerView.setFocusable(false); // Not focusable
+            decorLayerView.setAdjustViewBounds(true);
+
+            // Set layout parameters to match parent
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT
+            );
+            decorLayerView.setLayoutParams(params);
+
+            // Add after xServerView
+            rootView.addView(decorLayerView);
+
+            Log.d("XServerDisplayActivity", "Decor layer added for shortcut: " + shortcut.name);
+        }
         touchpadView = new TouchpadView(this, xServer, timeoutHandler, hideControlsRunnable);
         touchpadView.setSensitivity(globalCursorSpeed);
         touchpadView.setFourFingersTapCallback(() -> {

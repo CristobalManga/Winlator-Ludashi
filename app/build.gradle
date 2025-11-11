@@ -222,9 +222,9 @@ tasks.register("downloadProton") {
 
 tasks.register("prepareKotlinBuildScriptModel"){}
 
-downloadProton.dependsOn(downloadImageFS)
+//downloadProton.dependsOn(downloadImageFS)
 
-preBuild.dependsOn(downloadProton)
+//preBuild.dependsOn(downloadProton)
 
 
 

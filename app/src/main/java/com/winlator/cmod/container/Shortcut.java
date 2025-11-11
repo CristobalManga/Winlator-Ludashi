@@ -32,6 +32,11 @@ import java.nio.file.Files;
 
         private static final String COVER_ART_DIR = "app_data/cover_arts/"; // Removed leading "/" to keep it relative
 
+        private Bitmap decorLayer; // Decor layer image
+        private String decorLayerPath; // Path to decor layer image
+
+        private static final String DECOR_LAYER_DIR = "app_data/decor_layers/";
+
         public Shortcut(Container container, File file) {
             this.container = container;
             this.file = file;
@@ -87,6 +92,8 @@ import java.nio.file.Files;
 
             this.customCoverArtPath = getExtra("customCoverArtPath");
 
+            this.decorLayerPath = getExtra("decorLayerPath");
+            loadDecorLayer();
             // Load cover art if available
             loadCoverArt();
 
@@ -107,6 +114,16 @@ import java.nio.file.Files;
             File defaultCoverArtFile = new File(COVER_ART_DIR, this.name + ".png");
             if (defaultCoverArtFile.isFile()) {
                 this.coverArt = BitmapFactory.decodeFile(defaultCoverArtFile.getPath());
+            }
+        }
+
+        private void loadDecorLayer() {
+            if (decorLayerPath != null && !decorLayerPath.isEmpty()) {
+                File decorLayerFile = new File(decorLayerPath);
+                if (decorLayerFile.isFile()) {
+                    this.decorLayer = BitmapFactory.decodeFile(decorLayerFile.getPath());
+                    return; // Exit if decor layer is loaded
+                }
             }
         }
 
@@ -141,6 +158,74 @@ import java.nio.file.Files;
             catch (JSONException e) {
                 return fallback;
             }
+        }
+
+        // Getters and setters for decor layer
+        public Bitmap getDecorLayer() {
+            return decorLayer;
+        }
+
+        public void setDecorLayer(Bitmap decorLayer) {
+            this.decorLayer = decorLayer;
+        }
+
+        public String getDecorLayerPath() {
+            return decorLayerPath;
+        }
+
+        public void setDecorLayerPath(String decorLayerPath) {
+            this.decorLayerPath = decorLayerPath;
+            putExtra("decorLayerPath", decorLayerPath); // Save the decor layer path to extra data
+            saveData(); // Save immediately to ensure persistence
+            Log.d("Shortcut", "Set and saved decor layer path: " + decorLayerPath);
+        }
+
+        public void saveDecorLayer(Bitmap decorLayer) {
+            try {
+                File decorLayerDir = new File(container.getRootDir(), DECOR_LAYER_DIR);
+                if (!decorLayerDir.exists()) {
+                    boolean created = decorLayerDir.mkdirs();
+                    if (!created) {
+                        Log.e("Shortcut", "Failed to create decor layer directory: " + decorLayerDir.getAbsolutePath());
+                    }
+                }
+
+                File decorFile = new File(decorLayerDir, this.name + ".png");
+                if (FileUtils.saveBitmapToFile(decorLayer, decorFile)) {
+                    this.decorLayer = decorLayer; // Update the decor layer
+                    setDecorLayerPath(decorFile.getPath()); // Update the path and save data
+                    Log.d("Shortcut", "Decor layer saved at: " + decorFile.getPath());
+                } else {
+                    Log.e("Shortcut", "Failed to save decor layer.");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void removeDecorLayer() {
+            if (decorLayerPath != null && !decorLayerPath.isEmpty()) {
+                File decorLayerFile = new File(decorLayerPath);
+
+                Log.d("Shortcut", "Removing decor layer file at: " + decorLayerPath);
+
+                // Delete the file if it exists
+                if (decorLayerFile.exists() && decorLayerFile.delete()) {
+                    Log.d("Shortcut", "Decor layer file deleted successfully.");
+                } else {
+                    Log.e("Shortcut", "Failed to delete decor layer file or it doesn't exist.");
+                }
+            }
+
+            // Reset the decor layer path and decor layer object
+            this.decorLayerPath = null;
+            this.decorLayer = null;
+
+            // Remove it from extra data and save the state
+            putExtra("decorLayerPath", null);
+            saveData();
+
+            Log.d("Shortcut", "Shortcut state saved after removing decor layer. Current path: " + decorLayerPath);
         }
 
         public void putExtra(String name, String value) {
