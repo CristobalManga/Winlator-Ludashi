@@ -1489,6 +1489,138 @@ public class XServerDisplayActivity extends AppCompatActivity {
             });
         }
 
+        // ======================================
+// GYRO X / Y SENSITIVITY
+// ======================================
+
+        SeekBar sbGyroX = findViewById(R.id.SBGyroX);
+        SeekBar sbGyroY = findViewById(R.id.SBGyroY);
+
+        TextView lblGyroX = findViewById(R.id.LBLGyroX);
+        TextView lblGyroY = findViewById(R.id.LBLGyroY);
+
+
+// ======================================
+// GYRO X
+// ======================================
+
+        if (sbGyroX != null) {
+
+            float savedX = preferences.getFloat(
+                    "gyro_x_sensitivity",
+                    1.0f
+            );
+
+            savedX = Math.max(
+                    0.10f,
+                    Math.min(3.00f, savedX)
+            );
+
+            // Convertimos 0.10 - 3.00
+            // a 0 - 100 para nuestro SeekBar.
+            float sliderX =
+                    ((savedX - 0.10f) / 2.90f) * 100.0f;
+
+            sbGyroX.setValue(sliderX);
+
+            if (lblGyroX != null) {
+                lblGyroX.setText(
+                        String.format(
+                                "Gyro X Sensitivity: %.2f",
+                                savedX
+                        )
+                );
+            }
+
+            sbGyroX.setOnValueChangeListener((sb, value) -> {
+
+                float sensitivity =
+                        0.10f + (value / 100.0f) * 2.90f;
+
+                preferences.edit()
+                        .putFloat(
+                                "gyro_x_sensitivity",
+                                sensitivity
+                        )
+                        .apply();
+
+                if (winHandler != null) {
+                    winHandler.setGyroSensitivityX(
+                            sensitivity
+                    );
+                }
+
+                if (lblGyroX != null) {
+                    lblGyroX.setText(
+                            String.format(
+                                    "Gyro X Sensitivity: %.2f",
+                                    sensitivity
+                            )
+                    );
+                }
+            });
+        }
+
+
+// ======================================
+// GYRO Y
+// ======================================
+
+        if (sbGyroY != null) {
+
+            float savedY = preferences.getFloat(
+                    "gyro_y_sensitivity",
+                    1.0f
+            );
+
+            savedY = Math.max(
+                    0.10f,
+                    Math.min(3.00f, savedY)
+            );
+
+            float sliderY =
+                    ((savedY - 0.10f) / 2.90f) * 100.0f;
+
+            sbGyroY.setValue(sliderY);
+
+            if (lblGyroY != null) {
+                lblGyroY.setText(
+                        String.format(
+                                "Gyro Y Sensitivity: %.2f",
+                                savedY
+                        )
+                );
+            }
+
+            sbGyroY.setOnValueChangeListener((sb, value) -> {
+
+                float sensitivity =
+                        0.10f + (value / 100.0f) * 2.90f;
+
+                preferences.edit()
+                        .putFloat(
+                                "gyro_y_sensitivity",
+                                sensitivity
+                        )
+                        .apply();
+
+                if (winHandler != null) {
+                    winHandler.setGyroSensitivityY(
+                            sensitivity
+                    );
+                }
+
+                if (lblGyroY != null) {
+                    lblGyroY.setText(
+                            String.format(
+                                    "Gyro Y Sensitivity: %.2f",
+                                    sensitivity
+                            )
+                    );
+                }
+            });
+        }
+
         View btItemPipMode = findViewById(R.id.BTItemPipMode);
         if (btItemPipMode != null) {
             btItemPipMode.setOnClickListener(v -> {

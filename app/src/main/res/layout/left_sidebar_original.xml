@@ -621,6 +621,42 @@
                         app:maxValue="100"
                         app:minValue="10"
                         app:step="1" />
+
+                    <TextView
+                        android:id="@+id/LBLGyroX"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Gyro X Sensitivity: 1.00"
+                        android:textColor="#EEF7FF"
+                        android:textSize="14sp" />
+
+                    <com.winlator.cmod.widget.SeekBar
+                        android:id="@+id/SBGyroX"
+                        android:layout_width="match_parent"
+                        android:layout_height="30dp"
+                        app:maxValue="300"
+                        app:minValue="10"
+                        app:step="1" />
+
+                    <TextView
+                        android:id="@+id/LBLGyroY"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Gyro Y Sensitivity: 1.00"
+                        android:textColor="#EEF7FF"
+                        android:textSize="14sp" />
+
+                    <com.winlator.cmod.widget.SeekBar
+                        android:id="@+id/SBGyroY"
+                        android:layout_width="match_parent"
+                        android:layout_height="30dp"
+                        app:maxValue="300"
+                        app:minValue="10"
+                        app:step="1" />
+
+
                 </LinearLayout>
 
                 <LinearLayout

@@ -115,7 +115,7 @@ public class WinHandler {
         setGyroSensitivityX(preferences.getFloat("gyro_x_sensitivity", 1.0f));
         setGyroSensitivityY(preferences.getFloat("gyro_y_sensitivity", 1.0f));
         setInvertGyroX(preferences.getBoolean("invert_gyro_x", false));
-        setInvertGyroY(preferences.getBoolean("invert_gyro_y", false));
+        setInvertGyroY(preferences.getBoolean("invert_gyro_y", true));
         setGyroDeadzone(preferences.getFloat("gyro_deadzone", 0.05f));
         lastGyroTimestampNs = 0L;
     }
